@@ -89,7 +89,7 @@ function makeAllSpecies(FULL_STRATEGY_SPACE=true)
                                                                             dumS1 = selfChg_NeedS1 * help_NeedS1 * otherChg_NeedS1
                                                                             dumS2 = selfChg_NeedS2 * help_NeedS2 * otherChg_NeedS2
                                                                             species["strategy"]["need"] = Dict([("S0",dumS0),("S1",dumS1),("S2",dumS2)])
-                                                                            
+
                                                                             dumS0 = selfChg_SurpS0 * help_SurpS0 * otherChg_SurpS0
                                                                             dumS1 = selfChg_SurpS1 * help_SurpS1 * otherChg_SurpS1
                                                                             dumS2 = selfChg_SurpS2 * help_SurpS2 * otherChg_SurpS2
@@ -131,13 +131,14 @@ Take a species (essentially, a dictionary of offers) and generate a single strin
 function strategy2name(species)
     S0name = species["strategy"]["need"]["S0"] * ',' * species["strategy"]["surp"]["S0"]
     S1name = species["strategy"]["need"]["S1"] * ',' * species["strategy"]["surp"]["S1"]
+    S2name = species["strategy"]["need"]["S2"] * ',' * species["strategy"]["surp"]["S2"]
 
     #if S1name == S0name
     #    return( S0name )
     #else
     #    return( S0name * "|" * S1name )
     #end
-    return( S0name * "|" * S1name )
+    return( S0name * "|" * S1name * "|" * S2name)
 end
 
 
@@ -145,12 +146,12 @@ end
 Take a string representation of a strategy, and generate the full strategy (ie. a dictionary of offers).
 """
 function name2strategy(name::String)
-    @assert(length(name) == 15) #in [7,15])
+    @assert(length(name) == 15) #in [7,15]) TODO: might need to change?
     #if (length(name)==7)  name = name*'|'*name  end
     species = Dict{String,Any}()
     species["strategy"]= Dict{String,Any}()
-    species["strategy"]["need"] = Dict([("S0",name[1:3]),("S1",name[9:11])])
-    species["strategy"]["surp"] = Dict([("S0",name[5:7]),("S1",name[13:15])])
+    species["strategy"]["need"] = Dict([("S0",name[1:3]),("S1",name[9:11]), ("S2",name[17:19])])
+    species["strategy"]["surp"] = Dict([("S0",name[5:7]),("S1",name[13:15]), ("S2",name[21:23])])
     # tell it its name!
     species["name"] = strategy2name(species)
     return species
