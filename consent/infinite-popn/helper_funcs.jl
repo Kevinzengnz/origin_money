@@ -146,7 +146,7 @@ end
 Take a string representation of a strategy, and generate the full strategy (ie. a dictionary of offers).
 """
 function name2strategy(name::String)
-    @assert(length(name) == 15) #in [7,15]) TODO: might need to change?
+    @assert(length(name) == 23) #in [7,15]) 
     #if (length(name)==7)  name = name*'|'*name  end
     species = Dict{String,Any}()
     species["strategy"]= Dict{String,Any}()
@@ -158,10 +158,10 @@ function name2strategy(name::String)
 end
 
 # check those two functions work as intended
-testname = "+0+,+g-|-r+,000"
+testname = "+0+,+g-|-r+,000|-g-,+r+"
 @assert(strategy2name(name2strategy(testname)) == testname)
 
-testname = "+0+,+g-|+0+,+g-"
+testname = "+0+,+g-|+0+,+g-|-r+,000"
 @assert(strategy2name(name2strategy(testname)) == testname)
 
 #------------------------------------------------------------------------------------------------------------
