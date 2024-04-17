@@ -170,8 +170,8 @@ function build_interaction_cases(X, Y) # X,Y being 2 species / strategies
     """
     Precomputation that is useful for the score and payoff calculations to come.
     Consider the interaction between an X individual with a Y individual:
-    We step through all the 16 options for the 'case'=(Sx,Sy,Cx,Cy), where 
-      Sx is 1 if the X player is `solvent', ie. has score above zero.
+    We step through all the 25 options for the 'case'=(Sx,Sy,Cx,Cy), where 
+      Sx is 1 if the X player is `solvent', ie. has score above zero, and 2 if player is in 'extra surplus'.
       Cx is 1 if player is in `CAN` (== in surplus), and 0 if it is in Need;
       And similarly for the Y player.
     The strategies dictate what happens in each such case. 
@@ -179,10 +179,13 @@ function build_interaction_cases(X, Y) # X,Y being 2 species / strategies
     If Sx=0 AND (for the X player) ds= +1: include the case (Sx,Sy,Cx,Cy) in a set `alphaCases`
     If Sx=1 AND ds= +1: include in `betaCases`
     If Sx=1 AND ds= -1: include in `gammaCases`
+    If Sx=2 AND ds= +1: include in `deltaCases`
+    If Sx=2 AND ds= -1: include in `epsilonCases`
+
     If dh=1 (ie. X player helps): include in 'costCases'
     If dh=-1 (player is helped): include in 'benefitCases'
     
-    Return these 5 sets as a single Dict from the name (e.g. 'alphaCases') to the Set.
+    Return these 7 sets as a single Dict from the name (e.g. 'alphaCases') to the Set.
     """
     xcases = Dict{String,Set{Any}}("alpha"=>Set(), "beta"=>Set(), "gamma"=>Set(), "cost"=>Set(), "benefit"=>Set())
     
