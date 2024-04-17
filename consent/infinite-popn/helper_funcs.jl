@@ -53,42 +53,57 @@ function makeAllSpecies(FULL_STRATEGY_SPACE=true)
                                         for selfChg_SurpS1 in ScoreChgOptions# [selfChg_SurpS0]#ScoreChgOptions
                                             for help_SurpS1 in HelpOfferOptions#[help_SurpS0]#HelpOfferOptions
                                                 for otherChg_SurpS1 in ScoreChgOptions# [otherChg_SurpS0]#ScoreChgOptions
+                                                    for selfChg_NeedS2 in ScoreChgOptions# [selfChg_NeedS0]#ScoreChgOptions
+                                                        for help_NeedS2 in HelpOfferOptions#[help_NeedS0]#HelpOfferOptions
+                                                            for otherChg_NeedS2 in ScoreChgOptions# [otherChg_NeedS0]#ScoreChgOptions
+                                                                for selfChg_SurpS2 in ScoreChgOptions# [selfChg_SurpS0]#ScoreChgOptions
+                                                                    for help_SurpS2 in HelpOfferOptions#[help_SurpS0]#HelpOfferOptions
+                                                                        for otherChg_SurpS2 in ScoreChgOptions# [otherChg_SurpS0]#ScoreChgOptions
+                                                                            
+                                                                            # We don't need to include strategies that would be == "no offer"
+                                                                            # in effect, due to being unrealisable in practice.
+                                                                            # (nb: no problem to include them, but makes interpretation harder due to 
+                                                                            # effective redundancy among the possible strategies.)
+                                                                            # NOTICE this excludes "money" -r+,+g-  from the full strategy space.
+                                                                            
+                                                                            """
+                                                                            if  (FULL_STRATEGY_SPACE) && # nb. this needed, else will 
+                                                                                                        # exclude (eg) money from the restricted space too! 
+                                                                                ((selfChg_NeedS0 == '-') || (selfChg_SurpS0 == '-')) #
+                                                                                continue # because, even if agreed to, this would reduce x score below zero
+                                                                            elseif (help_NeedS0 == 'g') || (help_NeedS1 == 'g')
+                                                                                continue # because x can't give if it is in need.
+                                                                            end
+                                                                            """
+                                                                            if (help_NeedS0 == 'g') || (help_NeedS1 == 'g') || (help_NeedS2 == 'g')
+                                                                                continue # because x can't give if it is in need.
+                                                                            end
+                                                                            if ((selfChg_NeedS0 == '-') || (selfChg_SurpS0 == '-'))
+                                                                                continue # because the score can't go negative.
+                                                                            end
+                                                                            
+                                                                            species = Dict{String,Any}()
+                                                                            species["strategy"]= Dict{String,Any}()
+                                                                            # prep the STRINGS that go into the offer dictionaries.
+                                                                            dumS0 = selfChg_NeedS0 * help_NeedS0 * otherChg_NeedS0 
+                                                                            dumS1 = selfChg_NeedS1 * help_NeedS1 * otherChg_NeedS1
+                                                                            dumS2 = selfChg_NeedS2 * help_NeedS2 * otherChg_NeedS2
+                                                                            species["strategy"]["need"] = Dict([("S0",dumS0),("S1",dumS1),("S2",dumS2)])
+                                                                            
+                                                                            dumS0 = selfChg_SurpS0 * help_SurpS0 * otherChg_SurpS0
+                                                                            dumS1 = selfChg_SurpS1 * help_SurpS1 * otherChg_SurpS1
+                                                                            dumS2 = selfChg_SurpS2 * help_SurpS2 * otherChg_SurpS2
+                                                                            species["strategy"]["surp"] = Dict([("S0",dumS0),("S1",dumS1),("S2",dumS2)])
+                                                                            species["name"] = strategy2name(species) # knows its own name
 
-                                                    # We don't need to include strategies that would be == "no offer"
-                                                    # in effect, due to being unrealisable in practice.
-                                                    # (nb: no problem to include them, but makes interpretation harder due to 
-                                                    # effective redundancy among the possible strategies.)
-                                                    # NOTICE this excludes "money" -r+,+g-  from the full strategy space.
-                                                    
-                                                    """
-                                                    if  (FULL_STRATEGY_SPACE) && # nb. this needed, else will 
-                                                                                 # exclude (eg) money from the restricted space too! 
-                                                        ((selfChg_NeedS0 == '-') || (selfChg_SurpS0 == '-')) #
-                                                        continue # because, even if agreed to, this would reduce x score below zero
-                                                    elseif (help_NeedS0 == 'g') || (help_NeedS1 == 'g')
-                                                        continue # because x can't give if it is in need.
-                                                    end
-                                                    """
-                                                    if (help_NeedS0 == 'g') || (help_NeedS1 == 'g')
-                                                        continue # because x can't give if it is in need.
-                                                    end
-                                                    if ((selfChg_NeedS0 == '-') || (selfChg_SurpS0 == '-'))
-                                                        continue # because the score can't go negative.
-                                                    end
-                                                    
-                                                    species = Dict{String,Any}()
-                                                    species["strategy"]= Dict{String,Any}()
-                                                    # prep the STRINGS that go into the offer dictionaries.
-                                                    dumS0 = selfChg_NeedS0 * help_NeedS0 * otherChg_NeedS0 
-                                                    dumS1 = selfChg_NeedS1 * help_NeedS1 * otherChg_NeedS1
-                                                    species["strategy"]["need"] = Dict([("S0",dumS0),("S1",dumS1)])
-                                                    dumS0 = selfChg_SurpS0 * help_SurpS0 * otherChg_SurpS0
-                                                    dumS1 = selfChg_SurpS1 * help_SurpS1 * otherChg_SurpS1
-                                                    species["strategy"]["surp"] = Dict([("S0",dumS0),("S1",dumS1)])
-                                                    species["name"] = strategy2name(species) # knows its own name
-
-                                                    if FULL_STRATEGY_SPACE || isZeroSum(species["name"])
-                                                        allspecies[species["name"]] = species # name is its key in allspecies
+                                                                            if FULL_STRATEGY_SPACE || isZeroSum(species["name"])
+                                                                                allspecies[species["name"]] = species # name is its key in allspecies
+                                                                            end
+                                                                        end
+                                                                    end
+                                                                end
+                                                            end
+                                                        end
                                                     end
                                                 end
                                             end
