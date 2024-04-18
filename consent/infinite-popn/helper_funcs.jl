@@ -187,10 +187,10 @@ function build_interaction_cases(X, Y) # X,Y being 2 species / strategies
     
     Return these 7 sets as a single Dict from the name (e.g. 'alphaCases') to the Set.
     """
-    xcases = Dict{String,Set{Any}}("alpha"=>Set(), "beta"=>Set(), "gamma"=>Set(), "cost"=>Set(), "benefit"=>Set())
+    xcases = Dict{String,Set{Any}}("alpha"=>Set(), "beta"=>Set(), "gamma"=>Set(), "cost"=>Set(), "benefit"=>Set(), "delta"=>Set(), "epsilon"=>Set())
     
-    for Sx in 0:1
-        for Sy in 0:1
+    for Sx in 0:2
+        for Sy in 0:2
             for Cx in 0:1
                 for Cy in 0:1
                     # is there a match between the offers of X and Y, in this situation?
@@ -225,6 +225,11 @@ function build_interaction_cases(X, Y) # X,Y being 2 species / strategies
                     if (ds == 1 && Sx == 0) push!( xcases["alpha"],  [Sx, Sy, Cx, Cy]) end
                     if (ds == 1 && Sx == 1) push!( xcases["beta"],  [Sx, Sy, Cx, Cy]) end
                     if (ds == -1 && Sx == 1) push!( xcases["gamma"],   [Sx, Sy, Cx, Cy]) end
+
+                    #New cases
+                    if (ds == 1 && Sx == 2) push!( xcases["delta"], [Sx, Sy, Cx, Cy]) end
+                    if (ds == -1 && Sx == 2) push!( xcases["epsilon"], [Sx, Sy, Cx, Cy]) end
+                    
                     # WAS JUST THIS EARLIER BUT THE ABOVE LINE IS SAFER...
                     #if (ds == -1) push!( xcases["gamma"],   [Sx, Sy, Cx, Cy]) end
                     
