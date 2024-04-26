@@ -229,7 +229,7 @@ function build_interaction_cases(X, Y) # X,Y being 2 species / strategies
                     #New cases
                     if (ds == 1 && Sx == 2) push!( xcases["delta"], [Sx, Sy, Cx, Cy]) end
                     if (ds == -1 && Sx == 2) push!( xcases["epsilon"], [Sx, Sy, Cx, Cy]) end
-                    
+
                     # WAS JUST THIS EARLIER BUT THE ABOVE LINE IS SAFER...
                     #if (ds == -1) push!( xcases["gamma"],   [Sx, Sy, Cx, Cy]) end
                     
@@ -257,13 +257,15 @@ end
 """
     Find stable score distribution of an infinite population 
     consisting of a single species.
+
+    k is our threshold for new strategy.
 """
-function calc_stable_w_1species(A; w_init=[0.5,0.5], tolerance=1e-5, maxn=1000, VERBOSE=false)
+function calc_stable_w_1species(A; w_init=[0.5,0.5], tolerance=1e-5, maxn=1000, VERBOSE=false, k=1)
 
     cases = build_interaction_cases(A, A)
     w = copy(w_init)
     
-    trans = Dict("alpha"=>0.0, "beta"=>0.0, "gamma"=>0.0) # store the 3 transition probs as a Dict    
+    trans = Dict("alpha"=>0.0, "beta"=>0.0, "gamma"=>0.0, "delta"=>0.0, "epsilon"=>0.0) # store the 5 transition probs as a Dict    
     chg = 1.0
     global n = length(w)
     global counter = 0
@@ -285,9 +287,16 @@ function calc_stable_w_1species(A; w_init=[0.5,0.5], tolerance=1e-5, maxn=1000, 
         
         dw[1] += -w[1]*trans["alpha"] + w[2]*trans["gamma"]  # the change to w0
         dw[2] += -w[2]*trans["gamma"] -w[2]*trans["beta"]   + w[1]*trans["alpha"] + w[3]*trans["gamma"] # the change to w0
-        for i in 3:n
+        
+        for i in 3:(k+1)
             dw[i] += -w[i]*trans["gamma"] -w[i]*trans["beta"]   + w[i-1]*trans["beta"] + w[i+1]*trans["gamma"]
         end
+
+        #TODO: fix this and above
+        for i in (k+1):n
+            dw[i] += -w[i]*trans["gamma"] -w[i]*trans["beta"]   + w[i-1]*trans["beta"] + w[i+1]*trans["gamma"]
+        end
+
         dw[end] += w[end-1]*trans["beta"]
         #@assert(sum(dw) == 0.0)
    
@@ -341,8 +350,11 @@ end
     We run a Markov Chain with two possible end conditions:
     exit if the max change to score densities is less than "tolerance", and
     exit if the number of bins exceeds "maxn".
+
+    k is our threshold for new strategy.
+
 """
-function calc_stable_w_2species(A, B; rhoA=0.5, wA_init=[0.5,0.5], wB_init=[0.5,0.5], tolerance=1e-5, maxn=1000, VERBOSE = false, FORCE_UNTIL_MAXN=false)
+function calc_stable_w_2species(A, B; rhoA=0.5, wA_init=[0.5,0.5], wB_init=[0.5,0.5], tolerance=1e-5, maxn=1000, VERBOSE = false, FORCE_UNTIL_MAXN=false, k=1)
     """
     similar to 1species, but with 2 species.
     Handling the interactions right is extremely finicky.
@@ -359,7 +371,7 @@ function calc_stable_w_2species(A, B; rhoA=0.5, wA_init=[0.5,0.5], wB_init=[0.5,
     for ch in [chainA, chainB]
         ch["cases_withSelf"]  = build_interaction_cases(ch["self"], ch["self"])
         ch["cases_withOther"] = build_interaction_cases(ch["self"], ch["other"])
-        ch["trans"] = Dict("alpha"=>0.0, "beta"=>0.0, "gamma"=>0.0)    
+        ch["trans"] = Dict("alpha"=>0.0, "beta"=>0.0, "gamma"=>0.0, "delta"=>0.0, "epsilon"=>0.0)    
         ch["n"] = length(ch["w"])
     end
         
@@ -407,7 +419,12 @@ function calc_stable_w_2species(A, B; rhoA=0.5, wA_init=[0.5,0.5], wB_init=[0.5,
             dw = ch["dw"]
             dw[1] += -w[1]*t["alpha"] + w[2]*t["gamma"]  # change to w0
             dw[2] += -w[2]*t["gamma"]  -w[2]*t["beta"]   + w[1]*t["alpha"] + ch["w"][3]*t["gamma"] # change to w0
-            for i in 3:ch["n"]
+            for i in 3:(k+1)
+                dw[i] += -w[i]*t["gamma"] -w[i]*t["beta"]   + w[i-1]*t["beta"] + w[i+1]*t["gamma"]
+            end
+
+            #TODO: this
+            for i in (k+1):ch["n"]
                 dw[i] += -w[i]*t["gamma"] -w[i]*t["beta"]   + w[i-1]*t["beta"] + w[i+1]*t["gamma"]
             end
             dw[end] += w[end-1] * t["beta"]
