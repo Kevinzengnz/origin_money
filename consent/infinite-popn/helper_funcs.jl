@@ -288,16 +288,23 @@ function calc_stable_w_1species(A; w_init=[0.5,0.5], tolerance=1e-5, maxn=1000, 
         dw[1] += -w[1]*trans["alpha"] + w[2]*trans["gamma"]  # the change to w0
         dw[2] += -w[2]*trans["gamma"] -w[2]*trans["beta"]   + w[1]*trans["alpha"] + w[3]*trans["gamma"] # the change to w0
         
-        for i in 3:(k+1)
+        for i in 3:(k)
             dw[i] += -w[i]*trans["gamma"] -w[i]*trans["beta"]   + w[i-1]*trans["beta"] + w[i+1]*trans["gamma"]
         end
+        dw[k] += -w[i]*trans["gamma"] -w[i]*trans["delta"]   + w[i-1]*trans["beta"] + w[i+1]*trans["epsilon"]
+        dw[k+1] += -w[i]*trans["epsilon"] -w[i]*trans["delta"]   + w[i-1]*trans["beta"] + w[i+1]*trans["epsilon"] #at Sk
 
         #TODO: fix this and above
-        for i in (k+1):n
-            dw[i] += -w[i]*trans["gamma"] -w[i]*trans["beta"]   + w[i-1]*trans["beta"] + w[i+1]*trans["gamma"]
+        for i in (k+2):n
+            dw[i] += -w[i]*trans["epsilon"] -w[i]*trans["delta"]   + w[i-1]*trans["delta"] + w[i+1]*trans["epsilon"]
         end
 
-        dw[end] += w[end-1]*trans["beta"]
+        if(n < k+1)
+            dw[end] += w[end-1]*trans["beta"]
+        else
+            dw[end] += w[end-1]*trans["delta"]
+        end
+
         #@assert(sum(dw) == 0.0)
    
         w = w .+ dw
@@ -423,11 +430,20 @@ function calc_stable_w_2species(A, B; rhoA=0.5, wA_init=[0.5,0.5], wB_init=[0.5,
                 dw[i] += -w[i]*t["gamma"] -w[i]*t["beta"]   + w[i-1]*t["beta"] + w[i+1]*t["gamma"]
             end
 
-            #TODO: this
-            for i in (k+1):ch["n"]
-                dw[i] += -w[i]*t["gamma"] -w[i]*t["beta"]   + w[i-1]*t["beta"] + w[i+1]*t["gamma"]
+            dw[k] += -w[i]*t["gamma"] -w[i]*t["delta"]   + w[i-1]*t["beta"] + w[i+1]*t["epsilon"]
+            dw[k+1] += -w[i]*t["epsilon"] -w[i]*t["delta"]   + w[i-1]*t["beta"] + w[i+1]*t["epsilon"] #at Sk
+    
+            #TODO: fix this and above
+            for i in (k+2):ch["n"]
+                dw[i] += -w[i]*t["epsilon"] -w[i]*t["delta"]   + w[i-1]*t["delta"] + w[i+1]*t["epsilon"]
             end
-            dw[end] += w[end-1] * t["beta"]
+
+            if(ch["n"] < k+1)
+                dw[end] += w[end-1]*trans["beta"]
+            else
+                dw[end] += w[end-1]*trans["delta"]
+            end
+
             w = w .+ dw
             w = w ./ sum(w)
             max_chg = max(max_chg,  maximum( abs.(dw) ))
