@@ -13,7 +13,7 @@ COST = 1
 AllowedDS = Dict(['-','-']=>-1,['0','0']=>0,['+','+']=>1)
 AllowedDH = Dict(['g','r']=>'g',['r','g']=>'r',['0','0']=>'0')
 
-strScore  = Dict(0=>"S0",   1=>"S1")
+strScore  = Dict(0=>"S0",   1=>"S1", 2=>"S2")
 strCan    = Dict(0=>"need", 1=>"surp")
 
 function isZeroSum(stratname) 
@@ -188,13 +188,12 @@ function build_interaction_cases(X, Y) # X,Y being 2 species / strategies
     Return these 7 sets as a single Dict from the name (e.g. 'alphaCases') to the Set.
     """
     xcases = Dict{String,Set{Any}}("alpha"=>Set(), "beta"=>Set(), "gamma"=>Set(), "cost"=>Set(), "benefit"=>Set(), "delta"=>Set(), "epsilon"=>Set())
-    
+    #print(X)
     for Sx in 0:2
         for Sy in 0:2
             for Cx in 0:1
                 for Cy in 0:1
-                    # is there a match between the offers of X and Y, in this situation?
-                    
+                    # is there a match between the offers of X and Y, in this situation?                    
                     xOffer = X["strategy"][strCan[Cx]][strScore[Sx]] # which is 3-pronged; a string of 3 chars.
                     yOffer = Y["strategy"][strCan[Cy]][strScore[Sy]]
                     # if ANY of these is a fail, we simply jump to next, without any further checks
@@ -260,7 +259,7 @@ end
 
     k is our threshold for new strategy.
 """
-function calc_stable_w_1species(A; w_init=[0.5,0.5], tolerance=1e-5, maxn=1000, VERBOSE=false, k=1)
+function calc_stable_w_1species(A; w_init=[0.5,0.5], tolerance=1e-5, maxn=1000, VERBOSE=false, k=2)
 
     cases = build_interaction_cases(A, A)
     w = copy(w_init)
@@ -286,20 +285,26 @@ function calc_stable_w_1species(A; w_init=[0.5,0.5], tolerance=1e-5, maxn=1000, 
         dw = zeros(length(w))
         
         dw[1] += -w[1]*trans["alpha"] + w[2]*trans["gamma"]  # the change to w0
-        dw[2] += -w[2]*trans["gamma"] -w[2]*trans["beta"]   + w[1]*trans["alpha"] + w[3]*trans["gamma"] # the change to w0
+        dw[2] += -w[2]*trans["gamma"] -w[2]*trans["beta"] + w[1]*trans["alpha"] + w[3]*trans["gamma"] # the change to w0
         
-        for i in 3:(k)
-            dw[i] += -w[i]*trans["gamma"] -w[i]*trans["beta"]   + w[i-1]*trans["beta"] + w[i+1]*trans["gamma"]
+        for i in 3:(min(k-1,n))
+            dw[i] += -w[i]*trans["gamma"] -w[i]*trans["beta"] + w[i-1]*trans["beta"] + w[i+1]*trans["gamma"]
         end
-        dw[k] += -w[i]*trans["gamma"] -w[i]*trans["delta"]   + w[i-1]*trans["beta"] + w[i+1]*trans["epsilon"]
-        dw[k+1] += -w[i]*trans["epsilon"] -w[i]*trans["delta"]   + w[i-1]*trans["beta"] + w[i+1]*trans["epsilon"] #at Sk
+
+        if(k <= n)
+            dw[k] += -w[k]*trans["gamma"] -w[k]*trans["beta"] + w[k-1]*trans["beta"] + w[k+1]*trans["epsilon"]
+        end
+
+        if (k+1 <= n) 
+            dw[k+1] += -w[k+1]*trans["epsilon"] -w[k+1]*trans["delta"]   + w[k]*trans["beta"] + w[k+2]*trans["epsilon"] #at Sk
+        end
 
         #TODO: fix this and above
         for i in (k+2):n
             dw[i] += -w[i]*trans["epsilon"] -w[i]*trans["delta"]   + w[i-1]*trans["delta"] + w[i+1]*trans["epsilon"]
         end
 
-        if(n < k+1)
+        if(n <= k)
             dw[end] += w[end-1]*trans["beta"]
         else
             dw[end] += w[end-1]*trans["delta"]
