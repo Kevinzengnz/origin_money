@@ -366,7 +366,7 @@ end
     k is our threshold for new strategy.
 
 """
-function calc_stable_w_2species(A, B; rhoA=0.5, wA_init=[0.5,0.5], wB_init=[0.5,0.5], tolerance=1e-5, maxn=1000, VERBOSE = false, FORCE_UNTIL_MAXN=false, k=1)
+function calc_stable_w_2species(A, B; rhoA=0.5, wA_init=[0.5,0.5], wB_init=[0.5,0.5], tolerance=1e-5, maxn=1000, VERBOSE = false, FORCE_UNTIL_MAXN=false, k=2)
     """
     similar to 1species, but with 2 species.
     Handling the interactions right is extremely finicky.
@@ -431,12 +431,16 @@ function calc_stable_w_2species(A, B; rhoA=0.5, wA_init=[0.5,0.5], wB_init=[0.5,
             dw = ch["dw"]
             dw[1] += -w[1]*t["alpha"] + w[2]*t["gamma"]  # change to w0
             dw[2] += -w[2]*t["gamma"]  -w[2]*t["beta"]   + w[1]*t["alpha"] + ch["w"][3]*t["gamma"] # change to w0
-            for i in 3:(k+1)
+            for i in 3:(min(k-1,n))
                 dw[i] += -w[i]*t["gamma"] -w[i]*t["beta"]   + w[i-1]*t["beta"] + w[i+1]*t["gamma"]
             end
 
-            dw[k] += -w[i]*t["gamma"] -w[i]*t["delta"]   + w[i-1]*t["beta"] + w[i+1]*t["epsilon"]
-            dw[k+1] += -w[i]*t["epsilon"] -w[i]*t["delta"]   + w[i-1]*t["beta"] + w[i+1]*t["epsilon"] #at Sk
+            if(k <= ch["n"])
+                dw[k] += -w[k]*t["gamma"] -w[k]*t["beta"]   + w[k-1]*t["beta"] + w[k+1]*t["gamma"]
+            end
+            if(k+1 <= ch["n"])
+                dw[k+1] += -w[k+1]*t["epsilon"] -w[k+1]*t["delta"]   + w[k]*t["beta"] + w[k+2]*t["epsilon"] #at Sk
+            end
     
             #TODO: fix this and above
             for i in (k+2):ch["n"]
@@ -444,9 +448,9 @@ function calc_stable_w_2species(A, B; rhoA=0.5, wA_init=[0.5,0.5], wB_init=[0.5,
             end
 
             if(ch["n"] < k+1)
-                dw[end] += w[end-1]*trans["beta"]
+                dw[end] += w[end-1]*t["beta"]
             else
-                dw[end] += w[end-1]*trans["delta"]
+                dw[end] += w[end-1]*t["delta"]
             end
 
             w = w .+ dw
