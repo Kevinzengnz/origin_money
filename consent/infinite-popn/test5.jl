@@ -8,10 +8,10 @@ money      = "-r+,+g-"
 spender    = "-r+,000" 
 scoremaker = "+0+,+0+" 
 naive      = "0r0,0g0"
-moneymaker = "+0+,+g-|-r+,+g-"
+moneymaker = "+0+,+g-|-r+,+g-|-r+,+g-"
 
 println("------ investigate the invasiveness of a strategy --------")
-GuineaPig = "+0+,+g-|-r+,+g-"
+GuineaPig = "+0+,+g-|-r+,+g-|-r+,+g-"
 println("Testing ",GuineaPig," as an invader from rare")
 
 

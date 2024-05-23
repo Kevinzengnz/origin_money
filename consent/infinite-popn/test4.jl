@@ -10,11 +10,11 @@ money      = "-r+,+g-"
 spender    = "-r+,000" 
 scoremaker = "+0+,+0+" 
 naive      = "0r0,0g0" 
-moneymaker = "+0+,+g-|-r+,+g-"
+moneymaker = "+0+,+g-|-r+,+g-|-r+,+g-"
 
 
 
-nameB = "+0+,+g-|-r+,+g-"
+nameB = "+0+,+g-|-r+,+g-|-r+,+g-"
 allspecies = makeAllSpecies(true)  #nb: call with "false" if you want the restricted strategies only.
 stratB = name2strategy(nameB)
 @printf("------------ how many can %s  *actively* invade from rare? --------\n",nameB)

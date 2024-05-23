@@ -19,14 +19,15 @@ include("helper_funcs.jl")
 MAXN = 200
 WA_INIT=[0.5,0.5]
 RHO_A=0.99
-
+K = 2;
+println("Hello, world!")
 function name_mimics(species_name, allspecies)
     mimic_substr_options = [
         "-r-","-r0","-r+","0r-","0r0","0r+","+r-","+r0","+r+",
         "-0-","-00","-0+","00-","000","00+","+0-","+00","+0+",
         "-g-","-g0","-g+","0g-","0g0","0g+","+g-","+g0","+g+"]
     mimics = []
-    for i in [1,5,9,13]
+    for i in [1,5,9,13,17,21]
         for option in mimic_substr_options
             tmp = collect(species_name)
             tmp[i:i+2] = collect(option)
@@ -44,9 +45,9 @@ allspecies = makeAllSpecies(FULL_STRATEGY_SPACE)
 
 # some to choose from...
 if FULL_STRATEGY_SPACE
-    prime_suspects = ["0r0,0g0|0r0,0g0", "000,+g-|-r+,+g-", "+0+,+g-|-r+,+g-"]
+    prime_suspects = ["0r0,0g0|0r0,0g0|0r0,0g0", "000,+g-|-r+,+g-|-r+,+g-", "+0+,+g-|-r+,+g-|-r+,+g-"]
 else
-    prime_suspects = ["0r0,0g0|0r0,0g0", "000,+g-|-r+,+g-"]
+    prime_suspects = ["0r0,0g0|0r0,0g0|0r0,0g0", "000,+g-|-r+,+g-|-r+,+g-"]
 end
 
 #delete!(allspecies,"+0+,+g-|-r+,+g-")

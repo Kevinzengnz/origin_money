@@ -12,8 +12,8 @@ allspecies = makeAllSpecies(true)  #nb: call with "false" if you want the restri
 println("Number of species in total: ",length(allspecies))
 
 
-A = "+0+,+g-|-r+,+g-"
-B = "000,+g-|-r+,+g-"
+A = "+0+,+g-|-r+,+g-|-r+,+g-"
+B = "000,+g-|-r+,+g-|-r+,+g-"
 
 # run B on its own to get a stable score distribution and fitness
 wB, nB, fitB = calc_stable_w_1species(allspecies[B])
@@ -26,7 +26,7 @@ uninvaded_at_Gen = Dict{Int,Any}()
 
 global counter
 
-GuineaPig = "+0+,+g-|-r+,+g-"
+GuineaPig = "+0+,+g-|-r+,+g-|-r+,+g-"
 println("Testing ",GuineaPig," as an invader from rare")
 
 MAXN = 1000

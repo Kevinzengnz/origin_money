@@ -12,8 +12,8 @@ include("helper_funcs.jl")
 
 #----------------------------------------------------------------------------------------------
 
-A = "+0+,+g-|-r+,+g-"  # the blue one
-B = "+0+,+g-|-r+,+0+"  # the other one
+A = "+0+,+g-|-r+,+g-|-r+,+g-"  # the blue one
+B = "+0+,+g-|-r+,+0+|-r+,+0+"  # the other one
 
 rhos = collect(0.05:0.05:0.95) # options for rho
 

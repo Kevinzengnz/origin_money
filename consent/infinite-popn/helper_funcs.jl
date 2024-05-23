@@ -431,7 +431,7 @@ function calc_stable_w_2species(A, B; rhoA=0.5, wA_init=[0.5,0.5], wB_init=[0.5,
             dw = ch["dw"]
             dw[1] += -w[1]*t["alpha"] + w[2]*t["gamma"]  # change to w0
             dw[2] += -w[2]*t["gamma"]  -w[2]*t["beta"]   + w[1]*t["alpha"] + ch["w"][3]*t["gamma"] # change to w0
-            for i in 3:(min(k-1,n))
+            for i in 3:(min(k-1,ch["n"]))
                 dw[i] += -w[i]*t["gamma"] -w[i]*t["beta"]   + w[i-1]*t["beta"] + w[i+1]*t["gamma"]
             end
 
