@@ -24,7 +24,7 @@ function isZeroSum(stratname)
     strat = name2strategy(stratname)["strategy"]
     isZeroSum = true
     for neediness in ["need","surp"]
-        for solvency in ["S0","S1"]
+        for solvency in ["S0","S1","S2"]
             if ((strat[neediness][solvency][1] * strat[neediness][solvency][3]) in ["-+","00","+-"]) == false
                 isZeroSum = false
             end
@@ -33,6 +33,8 @@ function isZeroSum(stratname)
     return isZeroSum
 end
 
+
+
 function makeAllSpecies(FULL_STRATEGY_SPACE=true)
     # make ALL species!!
     # Returns them as a SortedDict, with the name as key.
@@ -40,7 +42,7 @@ function makeAllSpecies(FULL_STRATEGY_SPACE=true)
     allspecies = Dict{String,Any}()
     ScoreChgOptions  = "-0+" 
     HelpOfferOptions = "g0r"
-        
+    println("making all species")    
     for selfChg_NeedS0 in ScoreChgOptions
         for help_NeedS0 in HelpOfferOptions
             for otherChg_NeedS0 in ScoreChgOptions
@@ -117,10 +119,10 @@ function makeAllSpecies(FULL_STRATEGY_SPACE=true)
             end
         end
     end
-    #println(length(allspecies)," species altogether")
-    #for (name,spec) in collect(allspecies)[1:6]
+    # println(length(allspecies)," species altogether")
+    # for (name,spec) in collect(allspecies)[1:6]
     #    println(name)
-    #end
+    # end
     return(allspecies)
 end
 
@@ -163,6 +165,81 @@ testname = "+0+,+g-|-r+,000|-g-,+r+"
 
 testname = "+0+,+g-|+0+,+g-|-r+,000"
 @assert(strategy2name(name2strategy(testname)) == testname)
+
+"""
+Take a species (essentially, a dictionary of offers) and generate a single string that represents it.
+"""
+function strategy2nameOriginal(species)
+    S0name = species["strategy"]["need"]["S0"] * ',' * species["strategy"]["surp"]["S0"]
+    S1name = species["strategy"]["need"]["S1"] * ',' * species["strategy"]["surp"]["S1"]
+
+    #if S1name == S0name
+    #    return( S0name )
+    #else
+    #    return( S0name * "|" * S1name )
+    #end
+    return( S0name * "|" * S1name )
+end
+
+"""
+Take a string representation of a strategy, and generate the full strategy (ie. a dictionary of offers).
+"""
+function name2strategyOriginal(name::String)
+    @assert(length(name) == 15) #in [7,15])
+    #if (length(name)==7)  name = name*'|'*name  end
+    species = Dict{String,Any}()
+    species["strategy"]= Dict{String,Any}()
+    species["strategy"]["need"] = Dict([("S0",name[1:3]),("S1",name[9:11])])
+    species["strategy"]["surp"] = Dict([("S0",name[5:7]),("S1",name[13:15])])
+    # tell it its name!
+    species["name"] = strategy2nameOriginal(species)
+    return species
+end
+
+# check those two functions work as intended
+testname = "+0+,+g-|-r+,000"
+@assert(strategy2nameOriginal(name2strategyOriginal(testname)) == testname)
+
+testname = "+0+,+g-|+0+,+g-"
+@assert(strategy2nameOriginal(name2strategyOriginal(testname)) == testname)
+
+
+#------------------------------------------------------------------------------------------------------------
+
+"""
+Given a noncontingent species (of length 15), create all the sub contingent species that can be made by adding a new offer
+"""
+function create_all_subspecies(species, FULL_STRATEGY_SPACE=true, subspecies = Dict{String,Any}())
+    ScoreChgOptions  = "-0+" 
+    HelpOfferOptions = "g0r"
+    for selfChg_NeedS2 in ScoreChgOptions
+        for help_NeedS2 in HelpOfferOptions
+            for otherChg_NeedS2 in ScoreChgOptions
+                for selfChg_SurpS2 in ScoreChgOptions
+                    for help_SurpS2 in HelpOfferOptions
+                        for otherChg_SurpS2 in ScoreChgOptions
+                            if (help_NeedS2 == 'g')
+                                continue # because x can't give if it is in need.
+                            end
+                            # prep the STRINGS that go into the offer dictionaries.
+                            dumS2 = selfChg_NeedS2 * help_NeedS2 * otherChg_NeedS2 
+                            species["strategy"]["need"]["S2"] = dumS2
+                            dumS2 = selfChg_SurpS2 * help_SurpS2 * otherChg_SurpS2
+                            species["strategy"]["surp"]["S2"] = dumS2
+                            species["name"] = strategy2name(species) # knows its own name
+
+                            if FULL_STRATEGY_SPACE || isZeroSum(species["name"])
+                                # new_allspecies[species["name"]] = species # name is its key in allspecies
+                                subspecies[species["name"]] = species # name is its key in allspecies
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+    return subspecies
+end
 
 #------------------------------------------------------------------------------------------------------------
 
