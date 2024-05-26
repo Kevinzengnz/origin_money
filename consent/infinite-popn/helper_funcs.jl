@@ -337,7 +337,6 @@ end
     k is our threshold for new strategy.
 """
 function calc_stable_w_1species(A; w_init=[0.5,0.5], tolerance=1e-5, maxn=1000, VERBOSE=false, k=2)
-
     cases = build_interaction_cases(A, A)
     w = copy(w_init)
     
@@ -349,18 +348,21 @@ function calc_stable_w_1species(A; w_init=[0.5,0.5], tolerance=1e-5, maxn=1000, 
         counter += 1
         n = length(w)
         w0 = w[1]
+        w1 = w[2]
+        for i in 3:min(k,n)
+            w1 += w[i]
+        end
         push!(w,0.0) # adds one more (empty) bin, because the top-possible score goes up each iteration.
         # find alpha, etc... which are CONDITIONED on Sx, so we don't include that prob, just the Sy one.
         for key in keys(trans) 
             total = 0.0
             for case in cases[key]  # Note: case[2] is Sy
-                # TODO: FIX THIS
                 if case[2]==0 
                     total += w0 
                 elseif case[2] == 1
-                    total += (1-w0)
+                    total += w1
                 else
-                    total += (1-w0) # ie. case[2] == 2 
+                    total += (1-w1-w0) # ie. case[2] == 2 
                 end
             end
             trans[key] = total/4.0 # the 1/4 is the p(Cx) * p(Cy) of this case.
@@ -369,32 +371,32 @@ function calc_stable_w_1species(A; w_init=[0.5,0.5], tolerance=1e-5, maxn=1000, 
         dw = zeros(length(w))
         
         dw[1] += -w[1]*trans["alpha"] + w[2]*trans["gamma"]  # the change to w0
-        dw[2] += -w[2]*trans["gamma"] -w[2]*trans["beta"] + w[1]*trans["alpha"] + w[3]*trans["gamma"] # the change to w0
-        
-        for i in 3:n#(max(k-1,n))
+        if(k != 2) #if k is 2, it will be covered by the following if k <= n line
+            dw[2] += -w[2]*trans["gamma"] -w[2]*trans["beta"] + w[1]*trans["alpha"] + w[3]*trans["gamma"] # the change to w0
+        end
+
+        for i in 3:(min(k-1,n))
             dw[i] += -w[i]*trans["gamma"] -w[i]*trans["beta"] + w[i-1]*trans["beta"] + w[i+1]*trans["gamma"]
         end
 
-        # if(k <= n)
-        #     dw[k] += -w[k]*trans["gamma"] -w[k]*trans["beta"] + w[k-1]*trans["beta"] + w[k+1]*trans["epsilon"]
-        # end
+        if(k <= n)
+            dw[k] += -w[k]*trans["gamma"] -w[k]*trans["beta"] + w[k-1]*trans["beta"] + w[k+1]*trans["epsilon"]
+        end
 
-        # if (k+1 <= n) 
-        #     dw[k+1] += -w[k+1]*trans["epsilon"] -w[k+1]*trans["delta"]   + w[k]*trans["beta"] + w[k+2]*trans["epsilon"] #at Sk
-        # end
+        if (k+1 <= n) 
+            dw[k+1] += -w[k+1]*trans["epsilon"] -w[k+1]*trans["delta"]   + w[k]*trans["beta"] + w[k+2]*trans["epsilon"] #at Sk
+        end
 
-        # #TODO: fix this and above
-        # for i in (k+2):n
-        #     dw[i] += -w[i]*trans["epsilon"] -w[i]*trans["delta"]   + w[i-1]*trans["delta"] + w[i+1]*trans["epsilon"]
-        # end
+        for i in (k+2):n
+            dw[i] += -w[i]*trans["epsilon"] -w[i]*trans["delta"]   + w[i-1]*trans["delta"] + w[i+1]*trans["epsilon"]
+        end
 
-        # if(n <= k)
-        #     dw[end] += w[end-1]*trans["beta"]
-        # else
-        #     dw[end] += w[end-1]*trans["delta"]
-        # end
+        if(n <= k)
+            dw[end] += w[end-1]*trans["beta"]
+        else
+            dw[end] += w[end-1]*trans["delta"]
+        end
 
-        dw[end] += w[end-1]*trans["beta"] #comment later
         #@assert(sum(dw) == 0.0)
    
         w = w .+ dw
