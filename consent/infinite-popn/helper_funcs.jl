@@ -410,15 +410,31 @@ function calc_stable_w_1species(A; w_init=[0.5,0.5], tolerance=1e-5, maxn=1000, 
     end
 
     w0 = w[1]
+    w1 = w[2]
+    for i in 3:min(k,n)
+        w1 += w[i]
+    end
     prob = Dict("cost"=>0.0, "benefit"=>0.0)
     for key in keys(prob)
         # no conditioning here, so we get the joint prob: a product of appropriate Sx and Sy probs.
         total = 0.0
         for case in cases[key]  # Note: case[2] is Sy
             pr = 1.0
-            #TODO: FIX FITNESS
-            if case[1]==0 pr *= w0 else pr *= (1-w0) end
-            if case[2]==0 pr *= w0 else pr *= (1-w0) end  # ie. quadratic terms are possible
+            if case[1]==0 
+                pr *= w0 
+            elseif case[1]==1 
+                pr *= w1 
+            else 
+                pr *= (1-w0-w1) 
+            end
+
+            if case[2]==0 
+                pr *= w0 
+            elseif case[2] == 1 
+                pr *= w1 
+            else 
+                pr *= (1-w0-w1) 
+            end  # ie. quadratic terms are possible
             total += pr
         end
         prob[key] = total/4.0 
