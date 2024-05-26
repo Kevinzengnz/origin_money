@@ -354,7 +354,14 @@ function calc_stable_w_1species(A; w_init=[0.5,0.5], tolerance=1e-5, maxn=1000, 
         for key in keys(trans) 
             total = 0.0
             for case in cases[key]  # Note: case[2] is Sy
-                if case[2]==0 total += w0 else total += (1-w0) end
+                # TODO: FIX THIS
+                if case[2]==0 
+                    total += w0 
+                elseif case[2] == 1
+                    total += (1-w0)
+                else
+                    total += (1-w0) # ie. case[2] == 2 
+                end
             end
             trans[key] = total/4.0 # the 1/4 is the p(Cx) * p(Cy) of this case.
         end
@@ -364,29 +371,30 @@ function calc_stable_w_1species(A; w_init=[0.5,0.5], tolerance=1e-5, maxn=1000, 
         dw[1] += -w[1]*trans["alpha"] + w[2]*trans["gamma"]  # the change to w0
         dw[2] += -w[2]*trans["gamma"] -w[2]*trans["beta"] + w[1]*trans["alpha"] + w[3]*trans["gamma"] # the change to w0
         
-        for i in 3:(min(k-1,n))
+        for i in 3:n#(max(k-1,n))
             dw[i] += -w[i]*trans["gamma"] -w[i]*trans["beta"] + w[i-1]*trans["beta"] + w[i+1]*trans["gamma"]
         end
 
-        if(k <= n)
-            dw[k] += -w[k]*trans["gamma"] -w[k]*trans["beta"] + w[k-1]*trans["beta"] + w[k+1]*trans["epsilon"]
-        end
+        # if(k <= n)
+        #     dw[k] += -w[k]*trans["gamma"] -w[k]*trans["beta"] + w[k-1]*trans["beta"] + w[k+1]*trans["epsilon"]
+        # end
 
-        if (k+1 <= n) 
-            dw[k+1] += -w[k+1]*trans["epsilon"] -w[k+1]*trans["delta"]   + w[k]*trans["beta"] + w[k+2]*trans["epsilon"] #at Sk
-        end
+        # if (k+1 <= n) 
+        #     dw[k+1] += -w[k+1]*trans["epsilon"] -w[k+1]*trans["delta"]   + w[k]*trans["beta"] + w[k+2]*trans["epsilon"] #at Sk
+        # end
 
-        #TODO: fix this and above
-        for i in (k+2):n
-            dw[i] += -w[i]*trans["epsilon"] -w[i]*trans["delta"]   + w[i-1]*trans["delta"] + w[i+1]*trans["epsilon"]
-        end
+        # #TODO: fix this and above
+        # for i in (k+2):n
+        #     dw[i] += -w[i]*trans["epsilon"] -w[i]*trans["delta"]   + w[i-1]*trans["delta"] + w[i+1]*trans["epsilon"]
+        # end
 
-        if(n <= k)
-            dw[end] += w[end-1]*trans["beta"]
-        else
-            dw[end] += w[end-1]*trans["delta"]
-        end
+        # if(n <= k)
+        #     dw[end] += w[end-1]*trans["beta"]
+        # else
+        #     dw[end] += w[end-1]*trans["delta"]
+        # end
 
+        dw[end] += w[end-1]*trans["beta"] #comment later
         #@assert(sum(dw) == 0.0)
    
         w = w .+ dw
@@ -406,6 +414,7 @@ function calc_stable_w_1species(A; w_init=[0.5,0.5], tolerance=1e-5, maxn=1000, 
         total = 0.0
         for case in cases[key]  # Note: case[2] is Sy
             pr = 1.0
+            #TODO: FIX FITNESS
             if case[1]==0 pr *= w0 else pr *= (1-w0) end
             if case[2]==0 pr *= w0 else pr *= (1-w0) end  # ie. quadratic terms are possible
             total += pr
@@ -484,6 +493,7 @@ function calc_stable_w_2species(A, B; rhoA=0.5, wA_init=[0.5,0.5], wB_init=[0.5,
             if ch==chainA chOther=chainB else chOther=chainA end 
             w0, w0Other = ch["w"][1], chOther["w"][1] 
             for key in keys(ch["trans"])
+                #TODO: FIX
                 grandTotal = 0.0
                 total = 0.0
                 for case in ch["cases_withSelf"][key]
@@ -553,6 +563,7 @@ function calc_stable_w_2species(A, B; rhoA=0.5, wA_init=[0.5,0.5], wB_init=[0.5,
             # first, encounters with Self
             total = 0.0
             for case in ch["cases_withSelf"][key]
+                #TODO: FIX FITNESS
                 pr = 1.0
                 if case[1]==0 pr *= w0 else pr *= (1-w0) end  # Note: case[1] is Sx, ie. Self
                 if case[2]==0 pr *= w0 else pr *= (1-w0) end  # Note: case[2] is Sy, ie. also Self
@@ -563,6 +574,7 @@ function calc_stable_w_2species(A, B; rhoA=0.5, wA_init=[0.5,0.5], wB_init=[0.5,
             total = 0.0
             for case in ch["cases_withOther"][key]
                 pr = 1.0 
+                #TODO: FIX FITNESS
                 if case[1]==0 pr *= w0 else pr *= (1-w0) end           # Note: case[1] is Sx, ie. Self
                 if case[2]==0 pr *= w0Other else pr *= (1-w0Other) end # Note: case[2] is Sy, ie. Other
                 total += pr
