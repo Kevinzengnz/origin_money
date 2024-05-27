@@ -373,13 +373,15 @@ function calc_stable_w_1species(A; w_init=[0.5,0.5], tolerance=1e-5, maxn=1000, 
         dw[1] += -w[1]*trans["alpha"] + w[2]*trans["gamma"]  # the change to w0
         if(k != 2) #if k is 2, it will be covered by the following if k <= n line
             dw[2] += -w[2]*trans["gamma"] -w[2]*trans["beta"] + w[1]*trans["alpha"] + w[3]*trans["gamma"] # the change to w0
+        else
+            dw[2] += -w[2]*t["gamma"]  -w[2]*t["beta"]   + w[1]*t["alpha"] + w[3]*t["epsilon"] # change to w0
         end
 
         for i in 3:(min(k-1,n))
             dw[i] += -w[i]*trans["gamma"] -w[i]*trans["beta"] + w[i-1]*trans["beta"] + w[i+1]*trans["gamma"]
         end
 
-        if(k <= n)
+        if(k <= n && k !=2)
             dw[k] += -w[k]*trans["gamma"] -w[k]*trans["beta"] + w[k-1]*trans["beta"] + w[k+1]*trans["epsilon"]
         end
 
@@ -470,7 +472,7 @@ end
     k is our threshold for new strategy.
 
 """
-function calc_stable_w_2species(A, B; rhoA=0.5, wA_init=[0.5,0.5], wB_init=[0.5,0.5], tolerance=1e-5, maxn=1000, VERBOSE = false, FORCE_UNTIL_MAXN=false, k=2)
+function calc_stable_w_2species(A, B; rhoA=0.5, wA_init=[0.5,0.5], wB_init=[0.5,0.5], tolerance=1e-5, maxn=1000, VERBOSE = false, FORCE_UNTIL_MAXN=false, k=3)
     """
     similar to 1species, but with 2 species.
     Handling the interactions right is extremely finicky.
@@ -520,7 +522,6 @@ function calc_stable_w_2species(A, B; rhoA=0.5, wA_init=[0.5,0.5], wB_init=[0.5,
             end 
 
             for key in keys(ch["trans"])
-                #TODO: FIX
                 grandTotal = 0.0
                 total = 0.0
                 for case in ch["cases_withSelf"][key]
@@ -550,16 +551,19 @@ function calc_stable_w_2species(A, B; rhoA=0.5, wA_init=[0.5,0.5], wB_init=[0.5,
 
             dw[1] += -w[1]*t["alpha"] + w[2]*t["gamma"]  # change to w0
             if(k != 2) #if k is 2, it will be covered by the following if k <= n line
-                dw[2] += -w[2]*t["gamma"]  -w[2]*t["beta"]   + w[1]*t["alpha"] + ch["w"][3]*t["gamma"] # change to w0
+                dw[2] += -w[2]*t["gamma"]  -w[2]*t["beta"]   + w[1]*t["alpha"] + w[3]*t["gamma"] # change to w0
+            else
+                dw[2] += -w[2]*t["gamma"]  -w[2]*t["beta"]   + w[1]*t["alpha"] + w[3]*t["epsilon"] # change to w0
             end
 
             for i in 3:(min(k-1,ch["n"]))
                 dw[i] += -w[i]*t["gamma"] -w[i]*t["beta"]   + w[i-1]*t["beta"] + w[i+1]*t["gamma"]
             end
 
-            if(k <= ch["n"])
+            if(k <= ch["n"] && k !=2)
                 dw[k] += -w[k]*t["gamma"] -w[k]*t["beta"]   + w[k-1]*t["beta"] + w[k+1]*t["gamma"]
             end
+
             if(k+1 <= ch["n"])
                 dw[k+1] += -w[k+1]*t["epsilon"] -w[k+1]*t["delta"]   + w[k]*t["beta"] + w[k+2]*t["epsilon"] #at Sk
             end
@@ -568,7 +572,7 @@ function calc_stable_w_2species(A, B; rhoA=0.5, wA_init=[0.5,0.5], wB_init=[0.5,
                 dw[i] += -w[i]*t["epsilon"] -w[i]*t["delta"]   + w[i-1]*t["delta"] + w[i+1]*t["epsilon"]
             end
 
-            if(ch["n"] < k+1)
+            if(ch["n"] <= k)
                 dw[end] += w[end-1]*t["beta"]
             else
                 dw[end] += w[end-1]*t["delta"]
