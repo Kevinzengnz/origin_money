@@ -509,18 +509,31 @@ function calc_stable_w_2species(A, B; rhoA=0.5, wA_init=[0.5,0.5], wB_init=[0.5,
         # find the new transition rates, for both chains
         for ch in [chainA, chainB]
             if ch==chainA chOther=chainB else chOther=chainA end 
-            w0, w0Other = ch["w"][1], chOther["w"][1] 
+            w0, w0Other = ch["w"][1], chOther["w"][1]
+            w1, w1Other = ch["w"][2], chOther["w"][2]
+            for i in 3:min(k,ch["n"]) # the 3rd to the 2nd-to-last bins
+                w1 += ch["w"][i]
+                
+            end 
+            for i in 3:min(k,chOther["n"]) # the 3rd to the 2nd-to-last bins
+                w1Other += chOther["w"][i]                
+            end 
+
             for key in keys(ch["trans"])
                 #TODO: FIX
                 grandTotal = 0.0
                 total = 0.0
                 for case in ch["cases_withSelf"][key]
-                    if case[2]==0 total += w0 else total += (1-w0) end    # Note: case[2] is Sy
+                    if case[2]==0 total += w0
+                    elseif case[2]==1 total += w1
+                    else total += (1-w1-w0) end    # Note: case[2] is Sy 
                 end
                 grandTotal += ch["rho"] * total
                 total = 0.0
                 for case in ch["cases_withOther"][key] 
-                    if case[2]==0 total += w0Other else total += (1-w0Other) end    # Note: case[2] is Sy
+                    if case[2]==0 total += w0Other 
+                    elseif case[2]==1 total += w1Other
+                    else total += (1-w0Other-w1Other) end    # Note: case[2] is Sy
                 end
                 grandTotal += chOther["rho"] * total
                 ch["trans"][key] = grandTotal/4.0 # the 1/4 is the p(Cx) * p(Cy) of this case.
@@ -534,8 +547,12 @@ function calc_stable_w_2species(A, B; rhoA=0.5, wA_init=[0.5,0.5], wB_init=[0.5,
             t = ch["trans"] # the three transitions: alpha, gamma, beta
             ch["dw"] = zeros(length(w))
             dw = ch["dw"]
+
             dw[1] += -w[1]*t["alpha"] + w[2]*t["gamma"]  # change to w0
-            dw[2] += -w[2]*t["gamma"]  -w[2]*t["beta"]   + w[1]*t["alpha"] + ch["w"][3]*t["gamma"] # change to w0
+            if(k != 2) #if k is 2, it will be covered by the following if k <= n line
+                dw[2] += -w[2]*t["gamma"]  -w[2]*t["beta"]   + w[1]*t["alpha"] + ch["w"][3]*t["gamma"] # change to w0
+            end
+
             for i in 3:(min(k-1,ch["n"]))
                 dw[i] += -w[i]*t["gamma"] -w[i]*t["beta"]   + w[i-1]*t["beta"] + w[i+1]*t["gamma"]
             end
@@ -547,7 +564,6 @@ function calc_stable_w_2species(A, B; rhoA=0.5, wA_init=[0.5,0.5], wB_init=[0.5,
                 dw[k+1] += -w[k+1]*t["epsilon"] -w[k+1]*t["delta"]   + w[k]*t["beta"] + w[k+2]*t["epsilon"] #at Sk
             end
     
-            #TODO: fix this and above
             for i in (k+2):ch["n"]
                 dw[i] += -w[i]*t["epsilon"] -w[i]*t["delta"]   + w[i-1]*t["delta"] + w[i+1]*t["epsilon"]
             end
@@ -574,6 +590,15 @@ function calc_stable_w_2species(A, B; rhoA=0.5, wA_init=[0.5,0.5], wB_init=[0.5,
     for ch in [chainA, chainB]
         if ch==chainA chOther=chainB else chOther=chainA end
         w0, w0Other = ch["w"][1], chOther["w"][1] 
+        w1, w1Other = ch["w"][2], chOther["w"][2]
+        for i in 3:min(k,ch["n"]) # the 3rd to the 2nd-to-last bins
+            w1 += ch["w"][i]
+        end
+        for i in 3:min(k,chOther["n"]) # the 3rd to the 2nd-to-last bins
+            w1Other += chOther["w"][i]
+        end
+        
+
         prob = Dict("cost"=>0.0, "benefit"=>0.0)
         for key in ["cost", "benefit"]
             # no conditioning here, so calc joint prob: a product of the prob(Sx) and prob(Sy).
@@ -581,10 +606,14 @@ function calc_stable_w_2species(A, B; rhoA=0.5, wA_init=[0.5,0.5], wB_init=[0.5,
             # first, encounters with Self
             total = 0.0
             for case in ch["cases_withSelf"][key]
-                #TODO: FIX FITNESS
                 pr = 1.0
-                if case[1]==0 pr *= w0 else pr *= (1-w0) end  # Note: case[1] is Sx, ie. Self
-                if case[2]==0 pr *= w0 else pr *= (1-w0) end  # Note: case[2] is Sy, ie. also Self
+                if case[1]==0 pr *= w0 
+                elseif case[1]==1 pr *= w1 
+                else pr *= (1-w1-w0) end  # Note: case[1] is Sx, ie. Self
+
+                if case[2]==0 pr *= w0 
+                elseif case[2]==1 pr *= w1
+                else pr *= (1-w0-w1) end  # Note: case[2] is Sy, ie. also Self
                 total += pr
             end
             grandTotal += total * ch["rho"]
@@ -592,9 +621,13 @@ function calc_stable_w_2species(A, B; rhoA=0.5, wA_init=[0.5,0.5], wB_init=[0.5,
             total = 0.0
             for case in ch["cases_withOther"][key]
                 pr = 1.0 
-                #TODO: FIX FITNESS
-                if case[1]==0 pr *= w0 else pr *= (1-w0) end           # Note: case[1] is Sx, ie. Self
-                if case[2]==0 pr *= w0Other else pr *= (1-w0Other) end # Note: case[2] is Sy, ie. Other
+                if case[1]==0 pr *= w0 
+                elseif case[1]==1 pr *= w1 
+                else pr *= (1-w1-w0) end  # Note: case[1] is Sx, ie. Self
+
+                if case[2]==0 pr *= w0Other 
+                elseif case[2]==1 pr *= w1Other
+                else pr *= (1-w0Other-w1Other) end  # Note: case[2] is Sy, ie. Other
                 total += pr
             end
             grandTotal += total * chOther["rho"]
